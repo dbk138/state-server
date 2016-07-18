@@ -25,5 +25,16 @@ class UnitTests(unittest.TestCase):
         state = coordinates.parse_states_json_for_match()
         self.assertEqual(state, 'West Virginia')
 
+    def test_read_json_file_sd(self):
+        coordinates = Coordinates(44.414159, -103.514929)
+        state = coordinates.parse_states_json_for_match()
+        self.assertEqual(state, 'South Dakota')
+
+    def test_read_json_file_nv(self):
+        coordinates = Coordinates(35.978121, -114.834509)
+        state = coordinates.parse_states_json_for_match()
+        self.assertEqual(state, 'Nevada')
+
+
 if __name__ == '__main__':
     unittest.main()

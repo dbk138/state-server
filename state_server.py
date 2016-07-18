@@ -1,4 +1,5 @@
 #!/usr/bin/python2.7
+
 import json
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
@@ -11,7 +12,10 @@ class Coordinates:
         self.latitude = latitude
         self.longitude = longitude
 
-    '''http://www.ariel.com.au/a/python-point-int-poly.html'''
+    '''I found this code snippet in a pure python implementation
+    at the following location. Essentially it takes a polygon and x,y coordinates
+     and returns a boolean based on whether the point lies within. I decided to reuse this for
+    convenience. http://www.ariel.com.au/a/python-point-int-poly.html'''
     @staticmethod
     def point_inside_polygon(x, y, poly):
         n = len(poly)
@@ -35,34 +39,47 @@ class Coordinates:
         with open(self.FILE_NAME) as states:
             for line in states:
                 data = json.loads(line)
-                inside = self.point_inside_polygon(self.latitude, self.longitude, list(data['border']))
-                if inside:
+                is_point_in_state = self.point_inside_polygon(self.latitude, self.longitude, list(data['border']))
+                if is_point_in_state:
                     return data['state']
+
+    def get_lat_long_dict(self, post_data):
+        try:
+            return dict(value.split('=') for value in post_data.split("&"))
+        except ValueError:
+            return None
 
 
 class StateServer(BaseHTTPRequestHandler):
 
-    def _set_headers(self):
+    def _set_headers_success(self):
         self.response = self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+
+    def _set_headers_failure(self):
+        self.response = self.send_response(400)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
 
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
-        lat_long = dict(value.split("=") for value in post_data.split("&"))
+        lat_long = dict(value.split('=') for value in post_data.split("&"))
         coordinates = Coordinates(float(lat_long['latitude']), float(lat_long['longitude']))
         state = coordinates.parse_states_json_for_match()
-        print state
-        self._set_headers()
+        self._set_headers_success()
         self.wfile.write(state)
+
+    def do_GET(self):
+        self._set_headers_success()
+        self.wfile.write("Psst. Send me a post.")
 
 
 def run(server_class=HTTPServer, handler_class=StateServer, port=8080):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    print
-    'Starting httpd...'
+    print 'Starting server...'
     httpd.serve_forever()
 
 if __name__ == "__main__":
