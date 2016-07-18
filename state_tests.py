@@ -4,7 +4,7 @@ from state_server import PointInState
 from state_server import PointUtils
 
 
-class UnitTests(unittest.TestCase):
+class StateTests(unittest.TestCase):
 
     def test_point_in_polygon_true(self):
         state_border = [[-77.475793, 39.719623], [-80.524269, 39.721209], [-80.520592, 41.986872], [-74.705273, 41.375059], [-75.142901, 39.881602], [-77.475793, 39.719623]]
