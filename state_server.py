@@ -4,20 +4,15 @@ import json
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 
-class Coordinates:
+class Coordinates(object):
 
     FILE_NAME = 'states.json'
-
-    def __init__(self, longitude, latitude):
-        self.latitude = latitude
-        self.longitude = longitude
 
     '''I found this code snippet in a pure python implementation
     at the following location. Essentially it takes a polygon and x,y coordinates
      and returns a boolean based on whether the point lies within. I decided to reuse this for
     convenience. http://www.ariel.com.au/a/python-point-int-poly.html'''
-    @staticmethod
-    def point_inside_polygon(x, y, poly):
+    def point_inside_polygon(self, x, y, poly):
         n = len(poly)
         inside = False
 
@@ -35,13 +30,17 @@ class Coordinates:
 
         return inside
 
-    def parse_states_json_for_match(self):
+    def parse_states_json_for_match(self, longitude, latitude):
         with open(self.FILE_NAME) as states:
             for line in states:
                 data = json.loads(line)
-                is_point_in_state = self.point_inside_polygon(self.latitude, self.longitude, list(data['border']))
+                is_point_in_state = self.point_inside_polygon(latitude, longitude, list(data['border']))
                 if is_point_in_state:
                     return data['state']
+
+    def get_state_from_request(self, post_data):
+        lat_long = self.get_lat_long_dict(post_data)
+        return self.parse_states_json_for_match(float(lat_long['latitude']), float(lat_long['longitude']))
 
     def get_lat_long_dict(self, post_data):
         try:
@@ -64,10 +63,9 @@ class StateServer(BaseHTTPRequestHandler):
 
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        lat_long = dict(value.split('=') for value in post_data.split("&"))
-        coordinates = Coordinates(float(lat_long['latitude']), float(lat_long['longitude']))
-        state = coordinates.parse_states_json_for_match()
+        request = self.rfile.read(content_length)
+        coordinates = Coordinates()
+        state = coordinates.get_state_from_request(request)
         self._set_headers_success()
         self.wfile.write(state)
 
