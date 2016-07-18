@@ -1,3 +1,8 @@
 #!/bin/sh
+if [ "$1" = "test" ];
+  then
+    python state_tests.py && python state_server.py
+else
+    python state_server.py
+fi
 
-python state_server.py
